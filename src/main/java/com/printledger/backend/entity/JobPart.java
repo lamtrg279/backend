@@ -1,8 +1,9 @@
 package com.printledger.backend.entity;
 
-import java.util.List;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.List;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -41,8 +42,9 @@ public class JobPart {
     @Column(nullable = false)
     private Integer quantity;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String unitUOM;
+    private UOM unitUOM;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "job", nullable = false)

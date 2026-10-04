@@ -6,7 +6,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.printledger.backend.dto.LoginResponse;
 import com.printledger.backend.entity.User;
+import com.printledger.backend.entity.UserRole;
+import com.printledger.backend.entity.UserStatus;
 import com.printledger.backend.repository.UserRepository;
 
 @Service
@@ -24,8 +27,38 @@ public class UserService {
     // Validates, hashes, and saves a new user.
     public User createUser(User user) {
         validateRequiredFields(user);
+
+        user.setRole(UserRole.USER);
+        user.setStatus(UserStatus.ACTIVE);
+
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         return userRepository.save(user);
+    }
+
+    // Authenticates a user and returns a login response containing user details.
+    @Transactional
+    public LoginResponse login(String username, String rawPassword) {
+        if (username == null || username.isBlank() || rawPassword == null || rawPassword.isBlank()) {
+            throw new IllegalArgumentException("Username and password are required.");
+        }
+
+        User user = userRepository.findByUsername(username);
+
+        if (user == null || !passwordEncoder.matches(rawPassword, user.getPassword())) {
+            throw new IllegalArgumentException("Invalid username or password.");
+        }
+
+        if (user.getStatus() != UserStatus.ACTIVE) {
+            throw new IllegalArgumentException("User account is not active.");
+        }
+
+        return LoginResponse.builder()
+                .id(user.getId())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .role(user.getRole())
+                .status(user.getStatus())
+                .build();
     }
 
     // Finds a user by ID or throws an error when the user does not exist.
@@ -44,7 +77,7 @@ public class UserService {
     public User updateUser(Long id, User userDetails) {
         User existingUser = getUserById(id);
 
-        validateRequiredFields(userDetails);
+        // validateRequiredFields(userDetails);
 
         existingUser.setEmail(userDetails.getEmail());
         existingUser.setStatus(userDetails.getStatus());
